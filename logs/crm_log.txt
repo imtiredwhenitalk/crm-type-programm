@@ -1,0 +1,8 @@
+2026-06-14 22:59:15.393352 - imtiredwhenitalk - запустив програму
+2026-06-14 22:59:17.373391 - imtiredwhenitalk - почав роботу
+2026-06-14 22:59:18.781315 - imtiredwhenitalk - завершив роботу
+2026-06-14 23:05:59.565203 - imtiredwhenitalk - запустив програму
+2026-06-14 23:06:04.847053 - imtiredwhenitalk - почав роботу
+2026-06-14 23:06:13.795518 - imtiredwhenitalk - відкрив форму додавання робітника
+2026-06-14 23:06:46.890921 - imtiredwhenitalk - додав робітника: {'Name': '-', 'Department': 'CyberSecurity engineering', 'Salary': '15000$', 'Hire Date': '14.06.2026', 'id': 1}
+2026-06-14 23:07:45.385903 - imtiredwhenitalk - завершив роботу
