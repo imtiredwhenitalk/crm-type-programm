@@ -1504,7 +1504,7 @@ class CRMApp:
 
     def _worker_form(self, existing):
         title = "Редагувати працівника" if existing else "Новий працівник"
-        dlg = Modal(self.root, title, width=500, height=620)
+        dlg = Modal(self.root, title, width=600, height=750)
 
         entries = {}
         fields = [
