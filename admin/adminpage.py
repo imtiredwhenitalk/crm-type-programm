@@ -5,15 +5,15 @@ import os
 
 from tkinter import ttk, messagebox , mk_btn, make_tree , mk_sep
 from login import LoginWindow, current_user
-from theme import C
-from uihelper import make_tree
+from main.theme import C
+from main.uihelper import make_tree
 from logs import log_action
-from task import db_get_tasks, db_delete_tasks, TASK_STATUSES, PRIORITY_LEVELS
-from modalbase import Modal
-from usersdb import db_get_users, db_create_user, db_set_role, db_delete_user
-from workersdb import db_get_workers, db_delete_workers
-from task import db_get_tasks, db_delete_tasks, db_task_status
-from session import clear_session , db_get_time_sessions
+from main.task import db_get_tasks, db_delete_tasks, TASK_STATUSES, PRIORITY_LEVELS
+from db.modalbase import Modal
+from db.usersdb import db_get_users, db_create_user, db_set_role, db_delete_user
+from db.workersdb import db_get_workers, db_delete_workers
+from main.task import db_get_tasks, db_delete_tasks, db_task_status
+from db.session import clear_session , db_get_time_sessions
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "db")
