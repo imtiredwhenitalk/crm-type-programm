@@ -1,6 +1,13 @@
 import tkinter as tk
-from uihelper import mk_sep
-from theme import C
+import sys
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from main.uihelper import mk_sep
+from main.theme import C
 
 FAQ_SECTIONS = [
     ("Вхід у систему", [
@@ -71,7 +78,7 @@ FAQ_SECTIONS = [
          "- Змінювати ролі (admin / user)\n"
          "- Видаляти користувачів\n"
          "- Керувати працівниками і завданнями\n"
-         "- Переглядати повний журнал дій\n",
+         "- Переглядати повний журнал дій\n"
          "- Переглядати аналітику системи\n"
          "Порада: Адмін може скинути блокування після 3 невдалих спроб входу.\n"
          "Порада: Адмін може змінювати будь-які поля у працівниках та завданнях, звичайний користувач лише статус завдання.\n"

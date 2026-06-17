@@ -1,24 +1,22 @@
 import tkinter as tk
+import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from main.uihelper import mk_label, mk_entry, mk_btn, mk_sep
-from db.usersdb import db_login
-from lock import get_attempts, record_failed, reset_attempts, is_locked
+from login.lock import get_attempts, record_failed, reset_attempts, is_locked
 from db.session import save_session, load_session
-from profile import ProfileWindow
+from db.current_user import current_user as db_current_user  
+from db.usersdb import db_login
+from people.profile import ProfileWindow 
 from main.faq import FAQWindow
 from crm import log_action
 from main.theme import C
-from db import db_login_by_username
+from db.db import db_login_by_username  
 from crm import CRMApp
-import os 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_DIR = os.path.join(BASE_DIR, "db")
-LOGIN_DIR = os.path.join(BASE_DIR, "login")
-MAIN_DIR = os.path.join(BASE_DIR, "main")
-PEOPLE_DIR = os.path.join(BASE_DIR, "people")
-TIMER_DIR = os.path.join(BASE_DIR, "timer")
-
-current_user = None
 
 class LoginWindow:
     def __init__(self):
@@ -34,8 +32,8 @@ class LoginWindow:
         if saved:
             user = db_login_by_username(saved)
             if user:
-                global current_user
-                current_user = user
+                global db_current_user
+                db_current_user = user
                 self.win.after(150, self._auto_login)
 
         self.win.mainloop()
@@ -114,8 +112,8 @@ class LoginWindow:
         user = db_login(u, p)
         if user:
             reset_attempts(u)
-            global current_user
-            current_user = user
+            global db_current_user
+            db_current_user = user
             if self.remember.get():
                 save_session(u)
             log_action("увійшов у систему")

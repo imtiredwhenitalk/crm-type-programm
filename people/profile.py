@@ -1,7 +1,14 @@
 import tkinter as tk
+import sys
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from main.uihelper import mk_label, mk_entry, mk_btn, mk_sep
 from db.usersdb import db_update_profile
-from login import current_user
+from db.current_user import current_user  
 from crm import log_action
 from main.theme import C
 

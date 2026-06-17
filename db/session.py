@@ -2,7 +2,12 @@ import json
 import os
 import datetime
 
-from db.session import SESSION_FILE
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+SESSION_FILE = os.path.join(DATA_DIR, 'session.json')
+
+
+os.makedirs(DATA_DIR, exist_ok=True)
 
 def save_session(username):
     with open(SESSION_FILE, 'w', encoding='utf-8') as f:

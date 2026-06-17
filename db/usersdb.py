@@ -1,6 +1,6 @@
-from login import current_user
+from db.current_user import current_user
 from db import db, hash_pw , sqlite3
-from logs import LOG_FILE
+from log.logs import LOG_FILE
 
 import logging
 import datetime

@@ -3,16 +3,20 @@ import hashlib
 import datetime
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'crm.db')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, 'crm.db')
+
 PRIORITY_LEVELS = ['Критична', 'Висока', 'Середня', 'Низька']
 
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.row_factory = sqlite3.Row  
     return conn
 
 def db_init():
     conn = db()
+    
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +31,7 @@ def db_init():
             last_login   TEXT DEFAULT ""
         )
     ''')
+    
     conn.execute('''
         CREATE TABLE IF NOT EXISTS login_attempts (
             username     TEXT PRIMARY KEY,
@@ -34,6 +39,7 @@ def db_init():
             last_attempt TEXT
         )
     ''')
+    
     conn.execute('''
         CREATE TABLE IF NOT EXISTS workers (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,6 +54,7 @@ def db_init():
             status     TEXT DEFAULT "Активний"
         )
     ''')
+    
     conn.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,6 +69,7 @@ def db_init():
             category  TEXT DEFAULT ""
         )
     ''')
+    
     for sql in [
         '''CREATE TABLE IF NOT EXISTS logs (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,7 +113,8 @@ def db_init():
             except Exception:
                 pass
 
-    if not conn.execute('SELECT id FROM users WHERE username="admin"').fetchone():
+    admin = conn.execute('SELECT id FROM users WHERE username="admin"').fetchone()
+    if not admin:
         conn.execute(
             'INSERT INTO users (username,password,role,created) VALUES (?,?,?,?)',
             ('admin', hash_pw('admin'), 'admin', datetime.datetime.now().isoformat())
@@ -116,3 +125,16 @@ def db_init():
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
+
+def get_db_connection():
+    """Возвращает соединение с БД"""
+    return db()
+
+def db_login_by_username(username):
+    """Получает пользователя по имени"""
+    conn = db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None

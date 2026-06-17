@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from theme import C
+from main.theme import C
 
 def mk_entry(parent, show=None, width=None, placeholder=''):
     kw = dict(font=("Segoe UI", 10), relief="flat",
