@@ -423,21 +423,6 @@ CREATE TABLE notes (
 cp db/crm.db backups/crm_$(date +%Y%m%d).db
 ```
 
----
-
-## Скріншоти
-
-> Скріншоти можна додати у папку `docs/screenshots/` та вставити тут:
-
-```
-![Логін](docs/screenshots/login.png)
-![Дашборд](docs/screenshots/dashboard.png)
-![Працівники](docs/screenshots/workers.png)
-![Таймер](docs/screenshots/timer.png)
-```
-
----
-
 ## Розробка
 
 ### Додавання нової сторінки
