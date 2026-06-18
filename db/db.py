@@ -91,7 +91,7 @@ def db_init():
             pass
 
     existing_users = [r[1] for r in conn.execute('PRAGMA table_info(users)').fetchall()]
-    for col, dflt in [('phone','""'),('email','""'),('org','""'),('locked_until','""'),('last_login','""')]:
+    for col, dflt in [('phone','""'),('email','""'),('org','""'),('locked_until','""'),('last_login','""'),('department','""')]:
         if col not in existing_users:
             try:
                 conn.execute(f'ALTER TABLE users ADD COLUMN {col} TEXT DEFAULT {dflt}')
@@ -106,12 +106,36 @@ def db_init():
             pass
 
     existing_tasks = [r[1] for r in conn.execute('PRAGMA table_info(tasks)').fetchall()]
-    for col, dflt in [('note','""'),('category','""')]:
+    for col, dflt in [('note','""'),('category','""'),('department','""')]:
         if col not in existing_tasks:
             try:
                 conn.execute(f'ALTER TABLE tasks ADD COLUMN {col} TEXT DEFAULT {dflt}')
             except Exception:
                 pass
+
+    # заповнити department у завданнях за відділом працівника або категорією
+    conn.execute('''
+        UPDATE tasks SET department = (
+            SELECT w.department FROM workers w
+            WHERE w.name = tasks.assignee AND w.department != ""
+            LIMIT 1
+        )
+        WHERE (department IS NULL OR department = "")
+          AND assignee != ""
+    ''')
+    conn.execute('''
+        UPDATE tasks SET department = category
+        WHERE (department IS NULL OR department = "")
+          AND category IN ('IT','HR','Фінанси','Маркетинг','Продажі','Виробництво','Логістика','Адміністрація')
+    ''')
+    conn.execute('''
+        UPDATE tasks SET
+            assignee = (SELECT w.name FROM workers w
+                        WHERE substr(w.name, 1, 5) = substr(tasks.assignee, 1, 5) LIMIT 1),
+            department = (SELECT w.department FROM workers w
+                          WHERE substr(w.name, 1, 5) = substr(tasks.assignee, 1, 5) LIMIT 1)
+        WHERE (department IS NULL OR department = "") AND assignee != ""
+    ''')
 
     admin = conn.execute('SELECT id FROM users WHERE username="admin"').fetchone()
     if not admin:
@@ -119,6 +143,37 @@ def db_init():
             'INSERT INTO users (username,password,role,created) VALUES (?,?,?,?)',
             ('admin', hash_pw('admin'), 'admin', datetime.datetime.now().isoformat())
         )
+
+    worker_count = conn.execute('SELECT COUNT(*) FROM workers').fetchone()[0]
+    if worker_count == 0:
+        demo_workers = [
+            ('Олена Коваленко', 'HR', 35000, '2023-03-15', '+380501234567', 'olena@company.ua', 'HR-менеджер', '', 'Активний'),
+            ('Андрій Шевченко', 'IT', 55000, '2022-06-01', '+380671234567', 'andriy@company.ua', 'Розробник', '', 'Активний'),
+            ('Марія Бондар', 'Маркетинг', 42000, '2023-09-10', '+380931234567', 'maria@company.ua', 'Маркетолог', '', 'Активний'),
+            ('Іван Петренко', 'Продажі', 38000, '2024-01-20', '+380991234567', 'ivan@company.ua', 'Менеджер з продажу', '', 'Активний'),
+            ('Софія Мельник', 'Фінанси', 48000, '2021-11-05', '+380631234567', 'sofia@company.ua', 'Бухгалтер', '', 'Активний'),
+        ]
+        for w in demo_workers:
+            conn.execute(
+                'INSERT INTO workers (name,department,salary,hire_date,phone,email,position,note,status) VALUES (?,?,?,?,?,?,?,?,?)',
+                w
+            )
+
+    task_count = conn.execute('SELECT COUNT(*) FROM tasks').fetchone()[0]
+    if task_count == 0:
+        now = datetime.datetime.now().isoformat()
+        demo_tasks = [
+            ('Підготувати звіт Q1', 'Олена Коваленко', 'Висока', '2026-03-31', 'Активне', 'admin', now, '', 'Звітність', 'HR'),
+            ('Оновити CRM систему', 'Андрій Шевченко', 'Критична', '2026-04-15', 'В роботі', 'admin', now, '', 'IT', 'IT'),
+            ('Запустити рекламну кампанію', 'Марія Бондар', 'Середня', '2026-05-01', 'Активне', 'admin', now, '', 'Маркетинг', 'Маркетинг'),
+            ('Провести навчання нових співробітників', 'Олена Коваленко', 'Низька', '2026-04-30', 'На паузі', 'admin', now, '', 'HR', 'HR'),
+            ('Закрити угоду з клієнтом', 'Іван Петренко', 'Висока', '2026-03-20', 'Виконано', 'admin', now, '', 'Продажі', 'Продажі'),
+        ]
+        for t in demo_tasks:
+            conn.execute(
+                'INSERT INTO tasks (title,assignee,priority,deadline,status,author,created,note,category,department) VALUES (?,?,?,?,?,?,?,?,?,?)',
+                t
+            )
 
     conn.commit()
     conn.close()

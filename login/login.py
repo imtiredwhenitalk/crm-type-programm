@@ -9,14 +9,12 @@ if BASE_DIR not in sys.path:
 from main.uihelper import mk_label, mk_entry, mk_btn, mk_sep
 from login.lock import get_attempts, record_failed, reset_attempts, is_locked
 from db.session import save_session, load_session
-from db.current_user import current_user as db_current_user  
-from db.usersdb import db_login
-from people.profile import ProfileWindow 
+from db.current_user import set_current_user
+from db.usersdb import db_login, db_login_by_username, log_action
+from people.profile import ProfileWindow
 from main.faq import FAQWindow
-from crm import log_action
 from main.theme import C
-from db.db import db_login_by_username  
-from crm import CRMApp
+from main.main import CRMApp
 
 class LoginWindow:
     def __init__(self):
@@ -32,8 +30,7 @@ class LoginWindow:
         if saved:
             user = db_login_by_username(saved)
             if user:
-                global db_current_user
-                db_current_user = user
+                set_current_user(user)
                 self.win.after(150, self._auto_login)
 
         self.win.mainloop()
@@ -112,8 +109,7 @@ class LoginWindow:
         user = db_login(u, p)
         if user:
             reset_attempts(u)
-            global db_current_user
-            db_current_user = user
+            set_current_user(user)
             if self.remember.get():
                 save_session(u)
             log_action("увійшов у систему")

@@ -1,8 +1,10 @@
 import tkinter as tk
 import datetime
-    
-from login import current_user
-from theme import C , THEMES
+from tkinter import messagebox
+
+from db.current_user import current_user
+from main.theme import C, THEMES
+
 
 class CRMApp:
     def __init__(self):
@@ -23,6 +25,7 @@ class CRMApp:
         self.tsearch    = tk.StringVar()
         self.dark_mode  = False
         self.current_page = None
+        self.user_info_lbl = None
 
         self._layout()
         self._sidebar()
@@ -43,29 +46,33 @@ class CRMApp:
         self.body.rowconfigure(1, weight=1)
 
     def _sidebar(self):
-        # Logo
         logo_f = tk.Frame(self.side, bg=C['sidebar'])
         logo_f.pack(fill="x", pady=(24, 16))
         tk.Label(logo_f, text="CRM", font=("Segoe UI", 22, "bold"),
                  bg=C['sidebar'], fg=C['accent']).pack()
-        tk.Label(logo_f, text="System", font=("Segoe UI", 8),
+        tk.Label(logo_f, text="System v4.0", font=("Segoe UI", 8),
                  bg=C['sidebar'], fg=C['muted']).pack()
 
         tk.Frame(self.side, bg=C['side2'], height=1).pack(fill="x", padx=20, pady=(0, 4))
 
-        # User info
         user_f = tk.Frame(self.side, bg=C['side2'])
         user_f.pack(fill="x", padx=10, pady=(0, 12))
         inner = tk.Frame(user_f, bg=C['side2'])
         inner.pack(fill="x", padx=10, pady=10)
 
-        tk.Label(inner, text=current_user['username'],
-                 font=("Segoe UI", 10, "bold"),
-                 bg=C['side2'], fg='white').pack(anchor="w")
+        self.user_name_lbl = tk.Label(inner, text=current_user['username'],
+                                      font=("Segoe UI", 10, "bold"),
+                                      bg=C['side2'], fg='white')
+        self.user_name_lbl.pack(anchor="w")
         role_color = "#FFD166" if current_user['role'] == 'admin' else C['muted']
         tk.Label(inner, text=current_user['role'].upper(),
                  font=("Segoe UI", 7, "bold"),
                  bg=C['side2'], fg=role_color).pack(anchor="w", pady=(2, 0))
+        self.user_info_lbl = tk.Label(inner, text=self._user_subtitle(),
+                                      font=("Segoe UI", 7),
+                                      bg=C['side2'], fg=C['muted'],
+                                      wraplength=190, justify="left")
+        self.user_info_lbl.pack(anchor="w", pady=(4, 0))
 
         tk.Frame(self.side, bg=C['side2'], height=1).pack(fill="x", padx=20, pady=(0, 8))
 
@@ -76,6 +83,7 @@ class CRMApp:
             ("tasks",     "Завдання"),
             ("timer",     "Таймер"),
             ("logs",      "Журнал"),
+            ("profile",   "Профіль"),
             ("faq",       "Довідка"),
         ]
         if current_user['role'] == 'admin':
@@ -118,10 +126,23 @@ class CRMApp:
                   cursor="hand2",
                   command=self.logout).pack(fill="x", side="bottom", pady=(0, 14))
 
+    def _user_subtitle(self):
+        parts = []
+        if current_user.get('org'):
+            parts.append(current_user['org'])
+        if current_user.get('email'):
+            parts.append(current_user['email'])
+        return parts[0] if parts else "Користувач системи"
+
+    def _refresh_sidebar_user(self):
+        if self.user_info_lbl:
+            self.user_info_lbl.config(text=self._user_subtitle())
+
     def toggle_theme(self):
         global C
         self.dark_mode = not self.dark_mode
         C = THEMES['dark'] if self.dark_mode else THEMES['light']
+        self.dark_btn = None
         for w in self.root.winfo_children():
             w.destroy()
         self._layout()
@@ -130,10 +151,8 @@ class CRMApp:
         self.show(self.current_page or "dashboard")
 
     def _header(self):
-        hdr = tk.Frame(self.body, bg=C['white'],
-                       highlightthickness=0)
+        hdr = tk.Frame(self.body, bg=C['white'], highlightthickness=0)
         hdr.grid(row=0, column=0, sticky="ew")
-
         tk.Frame(hdr, bg=C['border'], height=1).pack(fill="x", side="bottom")
 
         inner = tk.Frame(hdr, bg=C['white'])
@@ -148,7 +167,6 @@ class CRMApp:
                              bg=C['white'], fg=C['muted'])
         self.hsub.grid(row=1, column=0, sticky="w")
 
-        # Clock in header
         self.clock_lbl = tk.Label(inner, text="", font=("Segoe UI", 9),
                                    bg=C['white'], fg=C['muted'])
         self.clock_lbl.grid(row=0, column=1, rowspan=2, sticky="e")
@@ -184,6 +202,7 @@ class CRMApp:
             "tasks":     ("Завдання",    "Дедлайни та пріоритети"),
             "timer":     ("Таймер",      "Облік робочого часу"),
             "logs":      ("Журнал",      "Повна історія дій"),
+            "profile":   ("Профіль",     "Ваші дані та налаштування"),
             "faq":       ("Довідка",     "Інструкція з використання"),
             "admin":     ("Адмінка",     "Управління системою"),
         }
@@ -197,13 +216,24 @@ class CRMApp:
             "tasks":     self.pg_tasks,
             "timer":     self.pg_timer,
             "logs":      self.pg_logs,
+            "profile":   self.pg_profile,
             "faq":       self.pg_faq,
             "admin":     self.pg_admin,
         }
         dispatch[key]()
 
+    def logout(self):
+        if not messagebox.askyesno("Вихід", "Вийти з системи?"):
+            return
+        from db.session import clear_session
+        from db.usersdb import log_action
+        from login.login import LoginWindow
+        clear_session()
+        log_action("вийшов з системи")
+        self.root.destroy()
+        LoginWindow()
+
     def _pad(self):
-        """Return the main padded content frame."""
         f = tk.Frame(self.page, bg=C['bg'])
         f.pack(fill="both", expand=True, padx=24, pady=(20, 24))
         f.columnconfigure(0, weight=1)
@@ -215,3 +245,33 @@ class CRMApp:
         bar = tk.Frame(p, bg=C['bg'])
         bar.pack(fill="x", pady=(0, 12))
         return bar
+
+
+# Wire page methods from split modules onto CRMApp
+from main import dashboard, taskpage, faq as faq_mod
+from people import workerpage, profilepage
+from timer import timer as timer_mod
+from log import logs as logs_mod
+from admin import adminpage
+
+_PUBLIC = [
+    'pg_dashboard', 'pg_workers', 'pg_tasks', 'pg_timer', 'pg_logs',
+    'pg_profile', 'pg_faq', 'pg_admin',
+    'worker_reload', 'worker_del', 'worker_add', 'worker_edit', 'worker_export_csv',
+    'task_reload', 'task_del', 'task_set_status', 'task_add', 'task_edit',
+    'toggle_work',
+]
+_PRIVATE = [
+    '_workers_list', '_workers_stats', '_worker_form', '_task_form',
+    '_timer_main', '_timer_history', '_tick', '_elapsed',
+    '_admin_users', '_admin_workers', '_admin_tasks', '_admin_analytics',
+    '_create_user_dialog', '_au_reload', '_au_role', '_au_reset_lock', '_au_delete',
+    '_aw_edit', '_aw_delete', '_at_delete', '_at_status',
+    '_log_reload', '_export_logs',
+]
+for _name in _PUBLIC + _PRIVATE:
+    for _mod in (dashboard, taskpage, faq_mod, workerpage, profilepage,
+                 timer_mod, logs_mod, adminpage):
+        if hasattr(_mod, _name):
+            setattr(CRMApp, _name, getattr(_mod, _name))
+            break

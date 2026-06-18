@@ -92,3 +92,68 @@ def make_tree(parent, columns, widths, height=None):
     wrap.grid_columnconfigure(0, weight=1)
 
     return tree
+
+
+def chart_card(parent, title, width=None):
+    """Картка для графіка з заголовком."""
+    card = tk.Frame(parent, bg=C['card'],
+                    highlightthickness=1, highlightbackground=C['border'])
+    if width:
+        card.configure(width=width)
+    tk.Label(card, text=title, font=("Segoe UI", 10, "bold"),
+             bg=C['card'], fg=C['text']).pack(padx=16, pady=(14, 4), anchor="w")
+    mk_sep(card).pack(fill="x", padx=16)
+    body = tk.Frame(card, bg=C['card'])
+    body.pack(fill="both", expand=True, padx=16, pady=10)
+    return card, body
+
+
+def draw_hbar(parent, label, value, max_val, color, bar_width=220, suffix=''):
+    """Горизонтальний bar-chart рядок."""
+    r = tk.Frame(parent, bg=C['card'])
+    r.pack(fill="x", pady=3)
+    tk.Label(r, text=label, font=("Segoe UI", 9),
+             bg=C['card'], fg=C['text'], width=14, anchor="w").pack(side="left")
+    bar_bg = tk.Frame(r, bg=C['ibg'], height=10, width=bar_width)
+    bar_bg.pack(side="left", padx=(4, 8))
+    bar_bg.pack_propagate(False)
+    if max_val and value:
+        pct_w = max(4, int(value / max_val * bar_width))
+        tk.Frame(bar_bg, bg=color, height=10, width=pct_w).pack(side="left")
+    pct = int(value / max_val * 100) if max_val else 0
+    tk.Label(r, text=f"{value}{suffix}  ({pct}%)", font=("Segoe UI", 9),
+             bg=C['card'], fg=C['muted']).pack(side="left")
+    return r
+
+
+def draw_donut_legend(parent, segments, size=80):
+    """Спрощена кругова діаграма (canvas) + легенда."""
+    wrap = tk.Frame(parent, bg=C['card'])
+    wrap.pack(fill="x", pady=4)
+
+    total = sum(v for _, v, _ in segments) or 1
+    cv = tk.Canvas(wrap, width=size, height=size, bg=C['card'],
+                   highlightthickness=0)
+    cv.pack(side="left", padx=(0, 12))
+
+    start = 90
+    for color, val, _ in segments:
+        if val <= 0:
+            continue
+        extent = val / total * 360
+        cv.create_arc(4, 4, size - 4, size - 4, start=start, extent=-extent,
+                      fill=color, outline=C['card'], width=2)
+        start -= extent
+    if total == 0 or all(v == 0 for _, v, _ in segments):
+        cv.create_oval(4, 4, size - 4, size - 4, outline=C['border'], width=2)
+
+    leg = tk.Frame(wrap, bg=C['card'])
+    leg.pack(side="left", fill="y")
+    for color, val, lbl in segments:
+        row = tk.Frame(leg, bg=C['card'])
+        row.pack(fill="x", pady=1)
+        tk.Frame(row, bg=color, width=10, height=10).pack(side="left", padx=(0, 6))
+        pct = int(val / total * 100) if total else 0
+        tk.Label(row, text=f"{lbl}: {val} ({pct}%)", font=("Segoe UI", 8),
+                 bg=C['card'], fg=C['text']).pack(side="left")
+    return wrap
